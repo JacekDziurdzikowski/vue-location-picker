@@ -10,7 +10,7 @@
     "picker",
     "googlemaps"
   ],
-  "main": "src/LocationPicker.vue",
+  "main": "dist/vue-location-picker.cjs.js",
   "module": "dist/vue-location-picker.es.js",
   "files": [
     "dist"
