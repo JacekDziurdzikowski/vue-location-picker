@@ -52,7 +52,7 @@
     },
 
     methods: {
-      bootstrap() {
+      bootstrap(options) {
         this.geocoder = new google.maps.Geocoder()
 
         this.map = new google.maps.Map(this.$refs.map, Object.assign({
