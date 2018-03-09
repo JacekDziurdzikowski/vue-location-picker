@@ -1,6 +1,6 @@
 /*!
  * vue-location-picker v1.0.1
- * (c) 2016-present Pantelis Peslis <pespantelis@gmail.com>
+ * (c) 2018-present Pantelis Peslis <pespantelis@gmail.com>
  * Released under the MIT License.
  */
 (function (global, factory) {
@@ -57,10 +57,28 @@ var LocationPicker = {
       ref: "map",
       staticClass: "LocationPicker__map"
     }), _vm._v(" "), _c('input', {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.input,
+        expression: "input"
+      }],
       ref: "input",
       staticClass: "LocationPicker__autocomplete",
       attrs: {
         "type": "text"
+      },
+      domProps: {
+        "value": _vm.input
+      },
+      on: {
+        "input": function input($event) {
+          if ($event.target.composing) {
+            return;
+          }
+
+          _vm.input = $event.target.value;
+        }
       }
     }), _vm._v(" "), _c('info-window', {
       ref: "info",
@@ -68,7 +86,6 @@ var LocationPicker = {
     })], 1);
   },
   staticRenderFns: [],
-  _scopeId: 'data-v-9fada148',
   props: ['value', 'config', 'options'],
   data: function data() {
     return {
@@ -76,7 +93,8 @@ var LocationPicker = {
       map: null,
       marker: null,
       infoWindow: null,
-      autocomplete: null
+      autocomplete: null,
+      input: ''
     };
   },
   components: {
@@ -111,7 +129,7 @@ var LocationPicker = {
     document.body.appendChild(script);
   },
   methods: {
-    bootstrap: function bootstrap() {
+    bootstrap: function bootstrap(options) {
       this.geocoder = new google.maps.Geocoder();
       this.map = new google.maps.Map(this.$refs.map, Object.assign({
         center: {
@@ -149,16 +167,16 @@ var LocationPicker = {
       var _this2 = this;
 
       this.map.panTo(e.latLng);
-      this.$els.input.value = '';
+      this.input = '';
       this.geocoder.geocode({
         'latLng': e.latLng
       }, function (response) {
         if (response && response.length > 0) {
-          _this2.place = response[0];
+          _this2.$emit('input', response[0]);
 
-          _this2.$refs.info.showAddress(_this2.place);
+          _this2.$refs.info.showAddress(response[0]);
         } else {
-          _this2.place = null;
+          _this2.$emit('input', null);
 
           _this2.$refs.info.showError();
         }
@@ -171,7 +189,7 @@ var LocationPicker = {
       var location = place.geometry && place.geometry.location;
 
       if (location) {
-        this.place = place;
+        this.$emit('input', place);
         this.map.panTo(location);
         this.marker.setPosition(location);
         this.$refs.info.showAddress(place);

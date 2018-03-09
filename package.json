@@ -25,7 +25,7 @@
     "test": "standard",
     "start": "poi demo/index.js",
     "build": "bili src/LocationPicker.vue",
-    "prepare": "npm run build && npm test"
+    "prepublish": "npm run build"
   },
   "dependencies": {},
   "standard": {

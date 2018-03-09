@@ -1,7 +1,7 @@
 <template>
   <div class="LocationPicker">
     <div class="LocationPicker__map" ref="map"/>
-    <input type="text" class="LocationPicker__autocomplete" ref="input"/>
+    <input type="text" class="LocationPicker__autocomplete" v-model="input" ref="input"/>
     <info-window class="LocationPicker__info-window" ref="info"/>
   </div>
 </template>
@@ -18,7 +18,8 @@
         map: null,
         marker: null,
         infoWindow: null,
-        autocomplete: null
+        autocomplete: null,
+        input: ''
       }
     },
 
@@ -93,7 +94,7 @@
 
       geocodeLocation (e) {
         this.map.panTo(e.latLng)
-        this.$els.input.value = ''
+        this.input = ''
 
         this.geocoder.geocode({'latLng': e.latLng}, (response) => {
           if (response && response.length > 0) {
@@ -124,7 +125,7 @@
 </script>
 
 
-<style scoped>
+<style>
   .LocationPicker,
   .LocationPicker__map {
     height: 100%;

@@ -126,12 +126,12 @@
 
 
 
-.LocationPicker[data-v-9fada148],
-.LocationPicker__map[data-v-9fada148] {
+.LocationPicker,
+.LocationPicker__map {
   height: 100%;
 }
 
-.LocationPicker__autocomplete[data-v-9fada148] {
+.LocationPicker__autocomplete {
   padding: 7px 14px;
   margin: 10px;
   width: 30%;
@@ -145,8 +145,8 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
 }
 
-.LocationPicker > .LocationPicker__autocomplete[data-v-9fada148],
-.LocationPicker > .LocationPicker__info-window[data-v-9fada148] {
+.LocationPicker > .LocationPicker__autocomplete,
+.LocationPicker > .LocationPicker__info-window {
   display: none;
 }
 
