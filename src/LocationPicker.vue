@@ -1,22 +1,17 @@
 <template>
   <div class="LocationPicker">
-    <div class="LocationPicker__map" v-el:map></div>
-    <input type="text" class="LocationPicker__autocomplete" v-el:input/>
-    <info-window class="LocationPicker__info-window" v-ref:info></info-window>
+    <div class="LocationPicker__map" ref="map"/>
+    <input type="text" class="LocationPicker__autocomplete" ref="input"/>
+    <info-window class="LocationPicker__info-window" ref="info"/>
   </div>
 </template>
 
-
 <script>
   import InfoWindow from './InfoWindow.vue'
+  import init from './init';
 
   export default {
-    props: {
-      place: {
-        type: Object,
-        twoWay: true
-      }
-    },
+    props: ['value', 'config', 'options'],
 
     data () {
       return {
@@ -30,11 +25,38 @@
 
     components: { InfoWindow },
 
-    events: {
-      'location-picker-init' (options) {
+    mounted() {
+      if (!this.config.key) {
+        console.error('[Vue Location Picker warn]: You should give a Google Maps API key')
+        return
+      }
+
+      this.config.libraries = 'places'
+      this.config.callback = 'initLocationPicker'
+
+      // set the callback function
+      global.initLocationPicker = () => {
+        this.bootstrap(this.options || {})
+      }
+
+      // construct the url
+      var apiUrl = 'https://maps.googleapis.com/maps/api/js'
+      var params = Object.keys(this.config).map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(this.config[key])}`)
+      var url = `${apiUrl}?${params.join('&')}`
+
+      // create and append the script to body
+      var script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.defer = true
+      document.body.appendChild(script)
+    },
+
+    methods: {
+      bootstrap() {
         this.geocoder = new google.maps.Geocoder()
 
-        this.map = new google.maps.Map(this.$els.map, Object.assign({
+        this.map = new google.maps.Map(this.$refs.map, Object.assign({
           center: { lat: 0, lng: 0 },
           zoom: 3,
           disableDefaultUI: true
@@ -50,20 +72,18 @@
           content: this.$refs.info.$el
         }, options.infoWindow))
 
-        this.autocomplete = new google.maps.places.Autocomplete(this.$els.input, Object.assign({
+        this.autocomplete = new google.maps.places.Autocomplete(this.$refs.input, Object.assign({
           types: ['geocode']
         }, options.autocomplete))
-        this.map.controls[google.maps.ControlPosition.TOP_LEFT].push(this.$els.input)
+        this.map.controls[google.maps.ControlPosition.TOP_LEFT].push(this.$refs.input)
 
         // events
         google.maps.event.addListenerOnce(this.map, 'idle', this.openInfoWindow)
         this.marker.addListener('dragstart', this.closeInfoWindow)
         this.marker.addListener('dragend', this.geocodeLocation)
         this.autocomplete.addListener('place_changed', this.moveMarker)
-      }
-    },
+      },
 
-    methods: {
       openInfoWindow () {
         this.infoWindow.open(this.map, this.marker)
       },
@@ -105,7 +125,7 @@
 </script>
 
 
-<style>
+<style scoped>
   .LocationPicker,
   .LocationPicker__map {
     height: 100%;
@@ -122,7 +142,7 @@
     text-overflow: ellipsis;
     border: 0;
     border-radius: 2px 0 0 2px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
   }
 
   .LocationPicker > .LocationPicker__autocomplete,
