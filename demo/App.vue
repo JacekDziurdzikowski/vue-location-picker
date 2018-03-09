@@ -12,7 +12,7 @@
     data () {
       return {
         place: null,
-        config: { key: 'AIzaSyCmh0oOwBomDqOOXcJnCBNoiRVeqDwysn0' },
+        config: { key: '' },
         options: {
           map: {
             center: { lat: 39.3622, lng: 22.9422 },

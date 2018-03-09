@@ -1,7 +1,7 @@
 <template>
   <div class="LocationPicker">
     <div class="LocationPicker__map" ref="map"/>
-    <input type="text" class="LocationPicker__autocomplete" v-model="input" ref="input"/>
+    <input type="text" class="LocationPicker__autocomplete" :value="input" ref="input"/>
     <info-window class="LocationPicker__info-window" ref="info"/>
   </div>
 </template>
@@ -10,7 +10,7 @@
   import InfoWindow from './InfoWindow.vue'
 
   export default {
-    props: ['value', 'config', 'options'],
+    props: ['value', 'config', 'options', 'input'],
 
     data () {
       return {
@@ -18,8 +18,7 @@
         map: null,
         marker: null,
         infoWindow: null,
-        autocomplete: null,
-        input: ''
+        autocomplete: null
       }
     },
 
