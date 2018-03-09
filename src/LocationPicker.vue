@@ -8,7 +8,6 @@
 
 <script>
   import InfoWindow from './InfoWindow.vue'
-  import init from './init';
 
   export default {
     props: ['value', 'config', 'options'],
