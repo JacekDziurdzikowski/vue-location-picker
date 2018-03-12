@@ -111,8 +111,8 @@ var LocationPicker = {
       this.geocoder = new google.maps.Geocoder();
       this.map = new google.maps.Map(this.$refs.map, Object.assign({
         center: {
-          lat: value.latitude,
-          lng: value.longitude
+          lat: this.value.latitude || 0,
+          lng: this.value.longitude || 0
         },
         zoom: 6
       }, options.map));
