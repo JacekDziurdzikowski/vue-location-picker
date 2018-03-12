@@ -13,9 +13,9 @@ var InfoWindow = {
 
     var _c = _vm._self._c || _h;
 
-    return _c('div', [_c('strong', [_vm._v(_vm._s(_vm.title))]), _vm._v(" "), _vm._l(_vm.body, function (item) {
+    return _c('div', _vm._l(_vm.body, function (item) {
       return _c('p', [_vm._v(_vm._s(item))]);
-    })], 2);
+    }));
   },
   staticRenderFns: [],
   _scopeId: 'data-v-3dd7c812',
@@ -27,13 +27,11 @@ var InfoWindow = {
   },
   methods: {
     showAddress: function showAddress(place) {
-      this.title = 'My address';
       this.body = place.formatted_address.split(',').map(function (item) {
         return item.trim();
       });
     },
     showError: function showError() {
-      this.title = 'Oups';
       this.body = ['Google Maps could not determine the approximate postal address of this location.'];
     }
   }
@@ -47,42 +45,24 @@ var LocationPicker = {
 
     var _c = _vm._self._c || _h;
 
-    return _c('div', {
+    return _vm.isOpen ? _c('div', {
       staticClass: "LocationPicker"
     }, [_c('div', {
       ref: "map",
       staticClass: "LocationPicker__map"
     }), _vm._v(" "), _c('input', {
-      directives: [{
-        name: "model",
-        rawName: "v-model",
-        value: _vm.input,
-        expression: "input"
-      }],
       ref: "input",
       staticClass: "LocationPicker__autocomplete",
       attrs: {
         "type": "text"
-      },
-      domProps: {
-        "value": _vm.input
-      },
-      on: {
-        "input": function input($event) {
-          if ($event.target.composing) {
-            return;
-          }
-
-          _vm.input = $event.target.value;
-        }
       }
     }), _vm._v(" "), _c('info-window', {
       ref: "info",
       staticClass: "LocationPicker__info-window"
-    })], 1);
+    })], 1) : _vm._e();
   },
   staticRenderFns: [],
-  props: ['value', 'config', 'options'],
+  props: ['value', 'config', 'options', 'isOpen'],
   data: function data() {
     return {
       geocoder: null,
@@ -97,35 +77,39 @@ var LocationPicker = {
     InfoWindow: InfoWindow
   },
   mounted: function mounted() {
-    var _this = this;
-
-    if (!this.config.key) {
-      console.error('[Vue Location Picker warn]: You should give a Google Maps API key');
-      return;
-    }
-
-    this.config.libraries = 'places';
-    this.config.callback = 'initLocationPicker'; // set the callback function
-
-    global.initLocationPicker = function () {
-      _this.bootstrap(_this.options || {});
-    }; // construct the url
-
-
-    var apiUrl = 'https://maps.googleapis.com/maps/api/js';
-    var params = Object.keys(this.config).map(function (key) {
-      return "".concat(encodeURIComponent(key), "=").concat(encodeURIComponent(_this.config[key]));
-    });
-    var url = "".concat(apiUrl, "?").concat(params.join('&')); // create and append the script to body
-
-    var script = document.createElement('script');
-    script.src = url;
-    script.async = true;
-    script.defer = true;
-    document.body.appendChild(script);
+    if (typeof google !== 'undefined') this.bootstrap(this.options);else this.importGoogle();
   },
   methods: {
-    bootstrap: function bootstrap(options) {
+    importGoogle: function importGoogle() {
+      var _this = this;
+
+      if (!this.config.key) {
+        console.error('[Vue Location Picker warn]: You should give a Google Maps API key');
+        return;
+      }
+
+      this.config.libraries = 'places';
+      this.config.callback = 'initLocationPicker'; // set the callback function
+
+      global.initLocationPicker = function () {
+        return _this.bootstrap(_this.options);
+      }; // construct the url
+
+
+      var apiUrl = 'https://maps.googleapis.com/maps/api/js';
+      var params = Object.keys(this.config).map(function (key) {
+        return "".concat(encodeURIComponent(key), "=").concat(encodeURIComponent(_this.config[key]));
+      });
+      var url = "".concat(apiUrl, "?").concat(params.join('&')); // create and append the script to body
+
+      var script = document.createElement('script');
+      script.src = url;
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    },
+    bootstrap: function bootstrap() {
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
       this.geocoder = new google.maps.Geocoder();
       this.map = new google.maps.Map(this.$refs.map, Object.assign({
         center: {
@@ -146,12 +130,12 @@ var LocationPicker = {
       this.autocomplete = new google.maps.places.Autocomplete(this.$refs.input, Object.assign({
         types: ['geocode']
       }, options.autocomplete));
-      this.map.controls[google.maps.ControlPosition.TOP_LEFT].push(this.$refs.input); // events
-
+      this.map.controls[google.maps.ControlPosition.TOP_LEFT].push(this.$refs.input);
       google.maps.event.addListenerOnce(this.map, 'idle', this.openInfoWindow);
       this.marker.addListener('dragstart', this.closeInfoWindow);
       this.marker.addListener('dragend', this.geocodeLocation);
       this.autocomplete.addListener('place_changed', this.moveMarker);
+      this.syncAddress();
     },
     openInfoWindow: function openInfoWindow() {
       this.infoWindow.open(this.map, this.marker);
@@ -163,16 +147,11 @@ var LocationPicker = {
       var _this2 = this;
 
       this.map.panTo(e.latLng);
-      this.input = '';
       this.geocoder.geocode({
-        'latLng': e.latLng
+        latLng: e.latLng
       }, function (response) {
-        if (response && response.length > 0) {
-          _this2.$emit('input', response[0]);
-
-          _this2.$refs.info.showAddress(response[0]);
-        } else {
-          _this2.$emit('input', null);
+        if (response && response.length > 0) _this2.goTo(response[0]);else {
+          _this2.goTo(null);
 
           _this2.$refs.info.showError();
         }
@@ -183,13 +162,49 @@ var LocationPicker = {
     moveMarker: function moveMarker() {
       var place = this.autocomplete.getPlace();
       var location = place.geometry && place.geometry.location;
+      if (location) this.goTo(place);
+    },
+    syncAddress: function syncAddress() {
+      var _this3 = this;
 
-      if (location) {
-        this.$emit('input', place);
-        this.map.panTo(location);
-        this.marker.setPosition(location);
-        this.$refs.info.showAddress(place);
+      if (!this.value || !this.value.address) ;
+      this.geocoder.geocode({
+        address: this.value.address
+      }, function (response) {
+        if (response && response.length > 0) _this3.goTo(response[0]);else {
+          _this3.goTo(null);
+
+          if (_this3.$refs.info) _this3.$refs.info.showError();
+        }
+
+        _this3.openInfoWindow();
+      });
+    },
+    goTo: function goTo(location) {
+      if (!location) {
+        this.$emit('input', {
+          address: null,
+          longitude: null,
+          latitude: null
+        });
+      } else {
+        this.$emit('input', {
+          address: location.formatted_address,
+          longitude: location.geometry.location.lng(),
+          latitude: location.geometry.location.lat()
+        });
+        if (this.$refs.info) this.$refs.info.showAddress(location);
+        this.map.panTo(location.geometry.location);
+        this.marker.setPosition(location.geometry.location);
       }
+    }
+  },
+  watch: {
+    value: function value() {
+      if (this.isOpen) this.syncAddress();
+    },
+    isOpen: function isOpen() {
+      if (this.isOpen) this.syncAddress();
     }
   }
 };

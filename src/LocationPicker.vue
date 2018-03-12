@@ -1,126 +1,160 @@
 <template>
-  <div class="LocationPicker">
+  <div class="LocationPicker" v-if="isOpen">
     <div class="LocationPicker__map" ref="map"/>
-    <input type="text" class="LocationPicker__autocomplete" :value="input" ref="input"/>
+    <input type="text" class="LocationPicker__autocomplete" ref="input"/>
     <info-window class="LocationPicker__info-window" ref="info"/>
   </div>
 </template>
 
 <script>
-  import InfoWindow from './InfoWindow.vue'
+  import InfoWindow from './InfoWindow.vue';
 
   export default {
-    props: ['value', 'config', 'options', 'input'],
+    props: ['value', 'config', 'options', 'isOpen'],
 
-    data () {
+    data() {
       return {
         geocoder: null,
         map: null,
         marker: null,
         infoWindow: null,
-        autocomplete: null
-      }
+        autocomplete: null,
+        input: ''
+      };
     },
 
     components: { InfoWindow },
 
     mounted() {
-      if (!this.config.key) {
-        console.error('[Vue Location Picker warn]: You should give a Google Maps API key')
-        return
-      }
-
-      this.config.libraries = 'places'
-      this.config.callback = 'initLocationPicker'
-
-      // set the callback function
-      global.initLocationPicker = () => {
-        this.bootstrap(this.options || {})
-      }
-
-      // construct the url
-      var apiUrl = 'https://maps.googleapis.com/maps/api/js'
-      var params = Object.keys(this.config).map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(this.config[key])}`)
-      var url = `${apiUrl}?${params.join('&')}`
-
-      // create and append the script to body
-      var script = document.createElement('script')
-      script.src = url
-      script.async = true
-      script.defer = true
-      document.body.appendChild(script)
+      if (typeof google !== 'undefined') this.bootstrap(this.options);
+      else this.importGoogle();
     },
 
     methods: {
-      bootstrap(options) {
-        this.geocoder = new google.maps.Geocoder()
+      importGoogle() {
+        if (!this.config.key) {
+          console.error('[Vue Location Picker warn]: You should give a Google Maps API key');
+          return;
+        }
+
+        this.config.libraries = 'places';
+        this.config.callback = 'initLocationPicker';
+
+        // set the callback function
+        global.initLocationPicker = () => this.bootstrap(this.options);
+
+        // construct the url
+        const apiUrl = 'https://maps.googleapis.com/maps/api/js';
+        const params = Object.keys(this.config).map(key => `${encodeURIComponent(key)}=${encodeURIComponent(this.config[key])}`);
+        const url = `${apiUrl}?${params.join('&')}`;
+
+        // create and append the script to body
+        const script = document.createElement('script');
+        script.src = url;
+        script.async = true;
+        script.defer = true;
+        document.body.appendChild(script);
+      },
+
+      bootstrap(options = {}) {
+        this.geocoder = new google.maps.Geocoder();
 
         this.map = new google.maps.Map(this.$refs.map, Object.assign({
           center: { lat: 0, lng: 0 },
           zoom: 3,
           disableDefaultUI: true
-        }, options.map))
+        }, options.map));
 
         this.marker = new google.maps.Marker(Object.assign({
           map: this.map,
           position: this.map.getCenter(),
           draggable: true
-        }, options.marker))
+        }, options.marker));
 
-        this.infoWindow = new google.maps.InfoWindow(Object.assign({
-          content: this.$refs.info.$el
-        }, options.infoWindow))
+        this.infoWindow = new google.maps.InfoWindow(Object.assign({ content: this.$refs.info.$el }, options.infoWindow));
 
-        this.autocomplete = new google.maps.places.Autocomplete(this.$refs.input, Object.assign({
-          types: ['geocode']
-        }, options.autocomplete))
-        this.map.controls[google.maps.ControlPosition.TOP_LEFT].push(this.$refs.input)
+        this.autocomplete = new google.maps.places.Autocomplete(this.$refs.input, Object.assign({ types: ['geocode'] }, options.autocomplete));
+        this.map.controls[google.maps.ControlPosition.TOP_LEFT].push(this.$refs.input);
 
-        // events
-        google.maps.event.addListenerOnce(this.map, 'idle', this.openInfoWindow)
-        this.marker.addListener('dragstart', this.closeInfoWindow)
-        this.marker.addListener('dragend', this.geocodeLocation)
-        this.autocomplete.addListener('place_changed', this.moveMarker)
+        google.maps.event.addListenerOnce(this.map, 'idle', this.openInfoWindow);
+        this.marker.addListener('dragstart', this.closeInfoWindow);
+        this.marker.addListener('dragend', this.geocodeLocation);
+        this.autocomplete.addListener('place_changed', this.moveMarker);
+
+        this.syncAddress();
       },
 
-      openInfoWindow () {
-        this.infoWindow.open(this.map, this.marker)
+      openInfoWindow() {
+        this.infoWindow.open(this.map, this.marker);
       },
 
-      closeInfoWindow () {
-        this.infoWindow.close()
+      closeInfoWindow() {
+        this.infoWindow.close();
       },
 
-      geocodeLocation (e) {
-        this.map.panTo(e.latLng)
-        this.input = ''
+      geocodeLocation(e) {
+        this.map.panTo(e.latLng);
 
-        this.geocoder.geocode({'latLng': e.latLng}, (response) => {
-          if (response && response.length > 0) {
-            this.$emit('input', response[0])
-            this.$refs.info.showAddress(response[0])
-          } else {
-            this.$emit('input', null)
-            this.$refs.info.showError()
+        this.geocoder.geocode({ latLng: e.latLng }, (response) => {
+          if (response && response.length > 0) this.goTo(response[0]);
+          else {
+            this.goTo(null);
+            this.$refs.info.showError();
           }
 
-          this.openInfoWindow()
-        })
+          this.openInfoWindow();
+        });
       },
 
-      moveMarker () {
-        var place = this.autocomplete.getPlace()
-        var location = place.geometry && place.geometry.location
+      moveMarker() {
+        const place = this.autocomplete.getPlace();
+        const location = place.geometry && place.geometry.location;
+        if (location) this.goTo(place);
+      },
 
-        if (location) {
-          this.$emit('input', place)
-          this.map.panTo(location)
-          this.marker.setPosition(location)
-          this.$refs.info.showAddress(place)
+      syncAddress() {
+        if (!this.value || !this.value.address);
+        this.geocoder.geocode({ address: this.value.address }, (response) => {
+          if (response && response.length > 0) this.goTo(response[0]);
+          else {
+            this.goTo(null);
+            if (this.$refs.info) this.$refs.info.showError();
+          }
+
+          this.openInfoWindow();
+        });
+      },
+
+      goTo(location) {
+        if (!location) {
+          this.$emit('input', {
+            address: null,
+            longitude: null,
+            latitude: null
+          });
+        }
+        else {
+          this.$emit('input', {
+            address: location.formatted_address,
+            longitude: location.geometry.location.lng(),
+            latitude: location.geometry.location.lat()
+          });
+          if (this.$refs.info) this.$refs.info.showAddress(location);
+          this.map.panTo(location.geometry.location);
+          this.marker.setPosition(location.geometry.location);
         }
       }
+    },
+
+    watch: {
+      value() {
+        if (this.isOpen) this.syncAddress();
+      },
+      isOpen() {
+        if (this.isOpen) this.syncAddress();
+      }
     }
-  }
+  };
 </script>
 
 
