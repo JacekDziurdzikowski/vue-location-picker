@@ -147,8 +147,8 @@
     },
 
     watch: {
-      value() {
-        if (this.isOpen) this.syncAddress();
+      value(newV, oldV) {
+        if (this.isOpen && newV !== oldV) this.syncAddress();
       },
       isOpen() {
         if (this.isOpen) this.syncAddress();
