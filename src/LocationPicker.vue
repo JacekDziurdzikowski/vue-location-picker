@@ -60,9 +60,8 @@
         this.geocoder = new google.maps.Geocoder();
 
         this.map = new google.maps.Map(this.$refs.map, Object.assign({
-          center: { lat: 0, lng: 0 },
-          zoom: 3,
-          disableDefaultUI: true
+          center: { lat: value.latitude, lng: value.longitude },
+          zoom: 6
         }, options.map));
 
         this.marker = new google.maps.Marker(Object.assign({
