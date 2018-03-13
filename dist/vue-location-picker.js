@@ -206,9 +206,6 @@ var LocationPicker = {
     }
   },
   watch: {
-    value: function value(newV, oldV) {
-      if (this.isOpen && newV !== oldV) this.syncAddress();
-    },
     isOpen: function isOpen() {
       if (this.isOpen) this.syncAddress();
     }
