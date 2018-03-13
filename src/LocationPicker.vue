@@ -98,7 +98,7 @@
           if (response && response.length > 0) this.goTo(response[0]);
           else {
             this.goTo(null);
-            this.$refs.info.showError();
+            if (this.$refs.info) this.$refs.info.showError();
           }
 
           this.openInfoWindow();
@@ -112,7 +112,7 @@
       },
 
       syncAddress() {
-        if (!this.value || !this.value.address);
+        if (!this.value || !this.value.longitude);
         this.geocoder.geocode({ latLng: { lng: this.value.longitude, lat: this.value.latitude } }, (response) => {
           if (response && response.length > 0) this.goTo(response[0]);
           else {
@@ -146,9 +146,6 @@
     },
 
     watch: {
-      value(newV, oldV) {
-        if (this.isOpen && newV !== oldV) this.syncAddress();
-      },
       isOpen() {
         if (this.isOpen) this.syncAddress();
       }
