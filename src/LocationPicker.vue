@@ -112,7 +112,7 @@
       },
 
       syncAddress() {
-        if (!this.value || !this.value.longitude);
+        if (!this.value || !this.value.longitude || !this.value.latitude) return;
         this.geocoder.geocode({ latLng: { lng: this.value.longitude, lat: this.value.latitude } }, (response) => {
           if (response && response.length > 0) this.goTo(response[0]);
           else {
@@ -146,6 +146,9 @@
     },
 
     watch: {
+      value(newV, oldV) {
+        if (this.isOpen && newV !== oldV) this.syncAddress();
+      },
       isOpen() {
         if (this.isOpen) this.syncAddress();
       }

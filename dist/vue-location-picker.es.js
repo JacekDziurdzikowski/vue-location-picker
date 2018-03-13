@@ -150,7 +150,7 @@ var LocationPicker = {
         if (response && response.length > 0) _this2.goTo(response[0]);else {
           _this2.goTo(null);
 
-          _this2.$refs.info.showError();
+          if (_this2.$refs.info) _this2.$refs.info.showError();
         }
 
         _this2.openInfoWindow();
@@ -164,9 +164,12 @@ var LocationPicker = {
     syncAddress: function syncAddress() {
       var _this3 = this;
 
-      if (!this.value || !this.value.address) ;
+      if (!this.value || !this.value.longitude || !this.value.latitude) return;
       this.geocoder.geocode({
-        address: this.value.address
+        latLng: {
+          lng: this.value.longitude,
+          lat: this.value.latitude
+        }
       }, function (response) {
         if (response && response.length > 0) _this3.goTo(response[0]);else {
           _this3.goTo(null);
