@@ -93,7 +93,7 @@
 
       geocodeLocation(e) {
         this.map.panTo(e.latLng);
-
+        console.log(e.latLng);
         this.geocoder.geocode({ latLng: e.latLng }, (response) => {
           if (response && response.length > 0) this.goTo(response[0]);
           else {
@@ -113,7 +113,7 @@
 
       syncAddress() {
         if (!this.value || !this.value.longitude || !this.value.latitude) return;
-        this.geocoder.geocode({ latLng: { lng: this.value.longitude, lat: this.value.latitude } }, (response) => {
+        this.geocoder.geocode({ latLng: { lat: this.value.latitude || 0, lng: this.value.longitude || 0 } }, (response) => {
           if (response && response.length > 0) this.goTo(response[0]);
           else {
             this.goTo(null);

@@ -144,6 +144,7 @@ var LocationPicker = {
       var _this2 = this;
 
       this.map.panTo(e.latLng);
+      console.log(e.latLng);
       this.geocoder.geocode({
         latLng: e.latLng
       }, function (response) {
@@ -167,8 +168,8 @@ var LocationPicker = {
       if (!this.value || !this.value.longitude || !this.value.latitude) return;
       this.geocoder.geocode({
         latLng: {
-          lng: this.value.longitude,
-          lat: this.value.latitude
+          lat: this.value.latitude || 0,
+          lng: this.value.longitude || 0
         }
       }, function (response) {
         if (response && response.length > 0) _this3.goTo(response[0]);else {
