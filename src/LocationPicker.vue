@@ -113,7 +113,7 @@
 
       syncAddress() {
         if (!this.value || !this.value.address);
-        this.geocoder.geocode({ address: this.value.address }, (response) => {
+        this.geocoder.geocode({ latLng: { lng: this.value.longitude, lat: this.value.latitude } }, (response) => {
           if (response && response.length > 0) this.goTo(response[0]);
           else {
             this.goTo(null);
