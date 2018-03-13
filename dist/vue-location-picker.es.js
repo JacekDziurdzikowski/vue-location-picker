@@ -111,8 +111,8 @@ var LocationPicker = {
       this.geocoder = new google.maps.Geocoder();
       this.map = new google.maps.Map(this.$refs.map, Object.assign({
         center: {
-          lat: this.value.latitude || 0,
-          lng: this.value.longitude || 0
+          lat: Number(this.value.latitude) || 0,
+          lng: Number(this.value.longitude) || 0
         },
         zoom: 6
       }, options.map));
@@ -144,7 +144,6 @@ var LocationPicker = {
       var _this2 = this;
 
       this.map.panTo(e.latLng);
-      console.log(e.latLng);
       this.geocoder.geocode({
         latLng: e.latLng
       }, function (response) {
@@ -168,8 +167,8 @@ var LocationPicker = {
       if (!this.value || !this.value.longitude || !this.value.latitude) return;
       this.geocoder.geocode({
         latLng: {
-          lat: this.value.latitude || 0,
-          lng: this.value.longitude || 0
+          lat: Number(this.value.latitude) || 0,
+          lng: Number(this.value.longitude) || 0
         }
       }, function (response) {
         if (response && response.length > 0) _this3.goTo(response[0]);else {
